@@ -1,8 +1,5 @@
 """
-models/schemas.py — 请求/响应数据模型（单一职责）
-
-类比 Android 中的 data class / State：
-  这些 Pydantic 模型定义了 API 契约，handler 只负责校验输入 → 调用 service → 格式化输出。
+models/schemas.py — 请求/响应数据模型（协议契约定义）
 """
 
 from pydantic import BaseModel, Field

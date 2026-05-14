@@ -36,7 +36,7 @@ class TTSService:
       - 调用 TTSEngine 逐块合成
       - 流式场景下通过 producer-consumer 管线预取
 
-    生命周期：无状态，每次请求创建新实例。由 FastAPI Depends 管理。
+    生命周期：无状态，每次请求创建新实例。
     """
 
     def __init__(self, engine: TTSEngine, settings: Settings) -> None:

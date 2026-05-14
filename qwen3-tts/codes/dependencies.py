@@ -1,8 +1,5 @@
 """
-dependencies.py — 依赖注入容器（FastAPI Depends）
-
-类比 Android Hilt 的 @Module / @Provides：
-  所有需要注入的对象集中在这里管理，handler 通过 Depends() 获取。
+dependencies.py — 依赖注入 / 单例管理
 
   - TTSEngine / SessionManager：应用级单例（重型对象，启动时创建）
   - TTSService：请求级实例（轻量编排层，每次请求新建）
@@ -18,7 +15,6 @@ _session_manager: SessionManager | None = None
 
 
 def get_engine() -> TTSEngine:
-    """获取 TTSEngine 单例。由 lifespan 调用 load() 完成初始化。"""
     global _engine
     if _engine is None:
         _engine = TTSEngine()
@@ -26,7 +22,6 @@ def get_engine() -> TTSEngine:
 
 
 def get_session_manager() -> SessionManager:
-    """获取 SessionManager 单例。"""
     global _session_manager
     if _session_manager is None:
         _session_manager = SessionManager()
@@ -34,5 +29,4 @@ def get_session_manager() -> SessionManager:
 
 
 def get_service() -> TTSService:
-    """每次请求创建一个新的 TTSService（无状态，轻量）。"""
     return TTSService(engine=get_engine(), settings=settings)

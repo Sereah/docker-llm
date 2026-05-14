@@ -28,17 +28,12 @@ RUN pip install --no-cache-dir \
     "https://github.com/lesj0610/flash-attention/releases/download/v2.8.3-cu12-torch2.11/flash_attn-2.8.3+cu12torch2.11cxx11abiTRUE-cp312-cp312-linux_x86_64.whl" \
     --no-build-isolation --break-system-packages
 
-# ── 2. FastAPI 服务依赖 ───────────────────────────────────────
-# 与 qwen-tts 分层安装：服务依赖改动不会触发重装 qwen-tts
+# ── 2. 服务依赖 ───────────────────────────────────────────────
 RUN pip install --no-cache-dir \
-    "fastapi>=0.111.0" \
-    "uvicorn[standard]>=0.29.0" \
     "websockets>=12.0" \
     "pydantic>=2.7.0" \
     "pydantic-settings>=2.3.0" \
     "loguru>=0.7.2" \
-    "python-multipart>=0.0.9" \
-    "aiofiles>=23.2.0" \
     "scipy>=1.13.0" \
     --break-system-packages
 
@@ -69,7 +64,4 @@ ENV HF_HOME=/models \
 # 暴露端口
 EXPOSE 8000/tcp
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=90s --retries=3 \
-    CMD curl -f http://localhost:8000/api/health || exit 1
- 
 CMD ["/app/start.sh"]
