@@ -1,0 +1,7 @@
+*.pyc
+*.tar
+*.tar.gz
+*.wav
+*.mp3
+.env
+Qwen3-TTS-12Hz-1.7B-CustomVoice/
