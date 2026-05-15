@@ -25,6 +25,7 @@ class SynthesizedChunk:
     pcm: np.ndarray
     sample_rate: int
     is_last: bool
+    total: int = 0
 
 
 class TTSService:
@@ -58,7 +59,19 @@ class TTSService:
             short_max=self._settings.short_text_max_chars,
             chunk_max=self._settings.stream_chunk_max_chars,
         )
+        logger.info(
+            f"[PROC] synthesize 分块完成 total={len(chunks)} "
+            f"text_len={len(text)} short_max={self._settings.short_text_max_chars} "
+            f"chunk_max={self._settings.stream_chunk_max_chars}"
+        )
+        for idx, chunk_text in enumerate(chunks):
+            logger.info(
+                f"[PROC] synthesize chunk[{idx}/{len(chunks) - 1}] "
+                f"len={len(chunk_text)} text={chunk_text}"
+            )
+
         results: List[SynthesizedChunk] = []
+        total = len(chunks)
 
         for idx, chunk_text in enumerate(chunks):
             pcm, sr = await self._engine.synthesize_chunk(
@@ -67,7 +80,8 @@ class TTSService:
             results.append(
                 SynthesizedChunk(
                     index=idx, text=chunk_text, pcm=pcm,
-                    sample_rate=sr, is_last=(idx == len(chunks) - 1),
+                    sample_rate=sr, is_last=(idx == total - 1),
+                    total=total,
                 )
             )
         return results
@@ -95,17 +109,29 @@ class TTSService:
         )
         total = len(chunks)
 
+        logger.info(
+            f"[PROC] synthesize_stream 分块完成 total={total} "
+            f"text_len={len(text)} short_max={self._settings.short_text_max_chars} "
+            f"chunk_max={self._settings.stream_chunk_max_chars}"
+        )
+        for idx, chunk_text in enumerate(chunks):
+            logger.info(
+                f"[PROC] synthesize_stream chunk[{idx}/{total - 1}] "
+                f"len={len(chunk_text)} text={chunk_text}"
+            )
+
         if total == 1:
             pcm, sr = await self._engine.synthesize_chunk(
                 chunks[0], speaker, language, instruct,
             )
             yield SynthesizedChunk(
                 index=0, text=chunks[0], pcm=pcm, sample_rate=sr, is_last=True,
+                total=1,
             )
             return
 
         prefetch = self._settings.stream_prefetch
-        logger.info(f"[Service] 流式调度 total={total} prefetch={prefetch}")
+        logger.info(f"[PROC] 流式调度 total={total} prefetch={prefetch}")
 
         queue: asyncio.Queue[Optional[SynthesizedChunk]] = asyncio.Queue(
             maxsize=prefetch + 1
@@ -114,7 +140,7 @@ class TTSService:
         async def producer() -> None:
             for idx, chunk_text in enumerate(chunks):
                 if cancel_event and cancel_event.is_set():
-                    logger.info(f"[Service] 块 {idx} 收到取消信号")
+                    logger.info(f"[PROC] 块 {idx} 收到取消信号")
                     break
                 is_last = idx == total - 1
                 try:
@@ -124,17 +150,19 @@ class TTSService:
                     chunk = SynthesizedChunk(
                         index=idx, text=chunk_text, pcm=pcm,
                         sample_rate=sr, is_last=is_last,
+                        total=total,
                     )
                     await queue.put(chunk)
-                    logger.debug(f"[Service] 合成完成 {idx}/{total - 1}")
+                    logger.debug(f"[PROC] 合成完成 {idx}/{total - 1}")
                 except Exception as e:
-                    logger.error(f"[Service] 块 {idx} 合成异常: {e}")
+                    logger.error(f"[PROC] 块 {idx} 合成异常: {e}")
                     sr = self._settings.sample_rate
                     silent_pcm = np.zeros(sr // 4, dtype=np.float32)
                     await queue.put(
                         SynthesizedChunk(
                             index=idx, text=chunk_text, pcm=silent_pcm,
                             sample_rate=sr, is_last=is_last,
+                            total=total,
                         )
                     )
             await queue.put(None)
@@ -159,5 +187,4 @@ class TTSService:
             except asyncio.CancelledError:
                 pass
 
-        logger.info(f"[Service] 流式管线结束，共输出 {delivered} 块")
-
+        logger.info(f"[PROC] 流式管线结束，共输出 {delivered} 块")

@@ -13,6 +13,9 @@ _SENTENCE_END_CH = re.compile(r'([。！？!?…])')
 _SENTENCE_END_EN = re.compile(r'([.!?]\s+)')
 _CLAUSE_BREAK = re.compile(r'([，,；;：:]\s*)')
 
+_SENTENCE_END_CHARS = frozenset('。！？!?…')
+_CLAUSE_BREAK_CHARS = frozenset('，,；;：:')
+
 
 def _merge_parts(parts: list) -> list:
     """
@@ -53,8 +56,26 @@ def _split_by_clause(text: str) -> List[str]:
     return _merge_parts(parts)
 
 
-def _force_split(text: str, max_chars: int) -> List[str]:
-    return [text[i:i + max_chars] for i in range(0, len(text), max_chars)]
+def _forward_split(text: str, max_chars: int) -> List[str]:
+    result: List[str] = []
+    while len(text) > max_chars:
+        split_at = max_chars
+        found = False
+        for i in range(max_chars, len(text)):
+            if text[i] in _SENTENCE_END_CHARS:
+                split_at = i + 1
+                found = True
+                break
+        if not found:
+            for i in range(max_chars, len(text)):
+                if text[i] in _CLAUSE_BREAK_CHARS:
+                    split_at = i + 1
+                    break
+        result.append(text[:split_at])
+        text = text[split_at:]
+    if text:
+        result.append(text)
+    return result
 
 
 def split_text(text: str, short_max: int = 120, chunk_max: int = 200) -> List[str]:
@@ -95,7 +116,7 @@ def split_text(text: str, short_max: int = 120, chunk_max: int = 200) -> List[st
                 if len(clause) <= chunk_max:
                     result.append(clause)
                 else:
-                    result.extend(_force_split(clause, chunk_max))
+                    result.extend(_forward_split(clause, chunk_max))
         else:
             current_buf.append(sent)
             current_len += sent_len

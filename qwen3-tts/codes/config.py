@@ -43,11 +43,11 @@ class Settings(BaseSettings):
 
     # ── 文本分块策略 ──────────────────────────────────────
     short_text_max_chars: int = Field(
-        default=120,
+        default=15,
         description="短文本上限（字），≤阈值一次性合成；>阈值分块流式返回",
     )
     stream_chunk_max_chars: int = Field(
-        default=200,
+        default=25,
         description="流式分块每段最大字符数",
     )
     stream_prefetch: int = Field(
