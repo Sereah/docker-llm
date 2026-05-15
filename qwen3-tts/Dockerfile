@@ -46,12 +46,10 @@ RUN pip install --no-cache-dir -U qwen-tts --break-system-packages
 COPY start.sh /app/start.sh
 RUN chmod +x /app/start.sh
 
-# ── 5. 代码（开发时不 COPY，改用 Volume 挂载；生产时打开） ───
-# 开发模式：注释掉下面这段，在 docker-compose 里用 volumes 挂载
-# 生产模式：取消注释，代码打进镜像
+# ── 5. 代码 ───
 COPY codes/ /app/codes/
 
-# ── 6. 复制模型文件（体积最大，放最后，改代码不重复复制） ────
+# ── 6. 复制模型文件 ────
 COPY Qwen3-TTS-12Hz-1.7B-CustomVoice /models/Qwen3-TTS-12Hz-1.7B-CustomVoice
 
 # ── 环境变量 ──────────────────────────────────────────────────

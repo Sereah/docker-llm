@@ -1,0 +1,13 @@
+services:
+  tts:
+    image: qwen3-txt-0.6b
+    container_name: txt
+    network_mode: host
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
