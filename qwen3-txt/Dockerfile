@@ -16,8 +16,11 @@ WORKDIR /app
 
 # ── 1. 服务依赖 ───────────────────────────────────────────────
 RUN pip install --no-cache-dir \
-    "websockets>=12.0" \
+    "fastapi>=0.115.0" \
+    "uvicorn[standard]>=0.34.0" \
     "transformers>=4.51.0" \
+    "accelerate>=0.26.0" \
+    "bitsandbytes>=0.45.0" \
     --break-system-packages
 
 # ── 4. 复制启动脚本 ───────────────────────────────────────────
